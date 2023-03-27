@@ -30,6 +30,8 @@ namespace OnlyR.Tests.Mocks
 
         public event EventHandler? StoppedEvent;
 
+        public event EventHandler<RecordingStatusChangeEventArgs>? StopCompleteEvent;
+
         public event EventHandler? StopRequested;
 
         public event EventHandler<RecordingProgressEventArgs>? RecordingProgressEvent;

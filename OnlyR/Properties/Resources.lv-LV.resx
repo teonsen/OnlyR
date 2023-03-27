@@ -277,7 +277,7 @@
     <value>Nolases temps</value>
     <comment>Settings page combobox title</comment>
   </data>
-  <data name="SETTINGS_SILENCE_AS_PERCENTAGE_VOLUME" xml:space="preserve">
+  <data name="SETTINGS_CHUNK_DETECTION_SPAN" xml:space="preserve">
     <value>Klusuma noteikšana (% no pilnā skaļuma)</value>
     <comment>Settings page combobox title</comment>
   </data>

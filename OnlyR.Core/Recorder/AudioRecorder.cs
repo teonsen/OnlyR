@@ -144,6 +144,7 @@ namespace OnlyR.Core.Recorder
                 }
                 else
                 {
+                    _recordingStatus = RecordingStatus.NotRecording;
                     _waveSource?.StopRecording();
                     _silenceWaveOut?.Stop();
                 }
@@ -202,7 +203,7 @@ namespace OnlyR.Core.Recorder
         private void WaveSourceRecordingStoppedHandler(object? sender, StoppedEventArgs e)
         {
             Cleanup();
-            OnRecordingStatusChangeEvent(new RecordingStatusChangeEventArgs(RecordingStatus.NotRecording));
+            OnRecordingStatusChangeEvent(new RecordingStatusChangeEventArgs(RecordingStatus.NotRecording, _finalRecordingFilePath));
             _fader = null;
         }
 

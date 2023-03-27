@@ -1,20 +1,16 @@
-﻿using System.Windows;
-using Microsoft.Toolkit.Mvvm.ComponentModel;
-using Microsoft.Toolkit.Mvvm.Input;
-using Microsoft.Toolkit.Mvvm.Messaging;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using OnlyR.Core.Enums;
 using OnlyR.Exceptions;
 using OnlyR.Model;
 using OnlyR.Services.Audio;
-using OnlyR.Services.AudioSilence;
 using OnlyR.Services.Options;
 using OnlyR.Services.RecordingCopies;
 using OnlyR.Services.RecordingDestination;
@@ -23,6 +19,12 @@ using OnlyR.Utils;
 using OnlyR.ViewModel.Messages;
 using Serilog;
 using System.Globalization;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System.Collections.Generic;
+using Fclp.Internals.Extensions;
+using OnlyR.Core.EventArgs;
 
 namespace OnlyR.ViewModel
 {
@@ -39,16 +41,33 @@ namespace OnlyR.ViewModel
         private readonly ICopyRecordingsService _copyRecordingsService;
         private readonly ICommandLineService _commandLineService;
         private readonly ISnackbarService _snackbarService;
-        private readonly ISilenceService _silenceService;
         private readonly ulong _safeMinBytesFree = 0x20000000;  // 0.5GB
         private readonly Stopwatch _stopwatch;
         private readonly ConcurrentDictionary<char, DateTime> _removableDrives = new();
+        private readonly Queue<VolumeSample> _volumeAverageForSilence = new Queue<VolumeSample>();
+        private readonly Queue<VolumeSample> _volumeAverageForChunk = new Queue<VolumeSample>();
+        private readonly int _minVolumeAverage = 5;  // TODO: This could be moved to a config file to allow tweeking
+        private readonly int _validInputLevel = 10;  // TODO: This could be moved to a config file to allow tweeking
+        private readonly int _silenceSecToRestart = 5;  // TODO: This could be moved to a config file to allow tweeking
+
+        private readonly int _chunkDetectionVolumeThreshold = 3;
+        private readonly int _chunkMinimumSecond = 2;
+
         private DispatcherTimer? _splashTimer;
         private int _volumeLevel;
+        private int _maxAverageVolumeLevel;
         private bool _isCopying;
         private RecordingStatus _recordingStatus;
         private string _statusStr;
         private string? _errorMsg;
+
+        enum eStopModes {
+            Nothing = 0,
+            JustStop,
+            CopyRestart,
+            DeleteRestart
+        }
+        private eStopModes _eStopMode;
 
         public RecordingPageViewModel(
             IAudioService audioService,
@@ -56,8 +75,7 @@ namespace OnlyR.ViewModel
             ICommandLineService commandLineService,
             IRecordingDestinationService destinationService,
             ICopyRecordingsService copyRecordingsService,
-            ISnackbarService snackbarService,
-            ISilenceService silenceService)
+            ISnackbarService snackbarService)
         {
             WeakReferenceMessenger.Default.Register<BeforeShutDownMessage>(this, OnShutDown);
             WeakReferenceMessenger.Default.Register<SessionEndingMessage>(this, OnSessionEnding);
@@ -66,13 +84,13 @@ namespace OnlyR.ViewModel
             _commandLineService = commandLineService;
             _copyRecordingsService = copyRecordingsService;
             _snackbarService = snackbarService;
-            _silenceService = silenceService;
 
             _stopwatch = new Stopwatch();
 
             _audioService = audioService;
             _audioService.StartedEvent += AudioStartedHandler;
             _audioService.StoppedEvent += AudioStoppedHandler;
+            _audioService.StopCompleteEvent += StopCompleteHandler;
             _audioService.StopRequested += AudioStopRequestedHandler;
             _audioService.RecordingProgressEvent += AudioProgressHandler;
 
@@ -159,7 +177,7 @@ namespace OnlyR.ViewModel
 
         public bool IsMaxRecordingTimeSpecified => _optionsService.Options.MaxRecordingTimeSeconds > 0;
 
-        public string ElapsedTimeStr => ElapsedTime.ToString("hh\\:mm\\:ss", CultureInfo.CurrentCulture);
+        public string ElapsedTimeStr => _ElapsedTime.ToString("hh\\:mm\\:ss", CultureInfo.CurrentCulture);
 
         public bool NoSettings => _commandLineService.NoSettings;
 
@@ -232,10 +250,9 @@ namespace OnlyR.ViewModel
             }
         }
 
-        private TimeSpan ElapsedTime => 
-            _stopwatch.IsRunning ? _stopwatch.Elapsed : TimeSpan.Zero;
+        private TimeSpan _ElapsedTime => _stopwatch.IsRunning ? _stopwatch.Elapsed : TimeSpan.Zero;
 
-        private bool StopOnSilenceEnabled => _optionsService.Options.MaxSilenceTimeSeconds > 0;
+        //private bool StopOnSilenceEnabled => _optionsService.Options.MaxSilenceTimeSeconds > 0;
 
         /// <summary>
         /// Responds to activation.
@@ -280,7 +297,7 @@ namespace OnlyR.ViewModel
             e.SessionEndingArgs.Cancel = RecordingStatus != RecordingStatus.NotRecording;
         }
 
-        private void AudioProgressHandler(object? sender, Core.EventArgs.RecordingProgressEventArgs e)
+        private void AudioProgressHandler(object? sender, RecordingProgressEventArgs e)
         {
             VolumeLevelAsPercentage = e.VolumeLevelAsPercentage;
             OnPropertyChanged(nameof(ElapsedTimeStr));
@@ -288,31 +305,110 @@ namespace OnlyR.ViewModel
             if (RecordingStatus != RecordingStatus.StopRequested)
             {
                 if (_optionsService.Options.MaxRecordingTimeSeconds > 0 &&
-                    ElapsedTime.TotalSeconds > _optionsService.Options.MaxRecordingTimeSeconds)
+                    _ElapsedTime.TotalSeconds > _optionsService.Options.MaxRecordingTimeSeconds)
                 {
                     AutoStopRecordingAtLimit();
                 }
 
-                if (StopOnSilenceEnabled)
-                {
-                    _silenceService.ReportVolume(e.VolumeLevelAsPercentage);
+                //Log.Logger.Information($"Vol = {_volumeLevel} ElapsedTime.TotalSeconds = {_ElapsedTime.TotalSeconds}");
 
-                    if (_silenceService.GetSecondsOfSilence() > _optionsService.Options.MaxSilenceTimeSeconds)
+                // Silence detection
+                if (_optionsService.Options.StopOnSilence)
+                {
+                    _eStopMode = StopIfSilenceDetected();
+
+                    if (_optionsService.Options.SplitRecordingByChunk && _eStopMode == eStopModes.Nothing)
                     {
-                        AutoStopRecordingAfterSilence();
+                        // Chunk detection
+                        _eStopMode = StopIfChunkDetected();
                     }
                 }
+
             }
         }
-        
-        private void AutoStopRecordingAfterSilence()
-        {
-            Log.Logger.Information(
-                "Automatically stopped recording after {Limit} seconds of silence",
-                _optionsService.Options.MaxSilenceTimeSeconds);
 
+        private eStopModes StopIfSilenceDetected()
+        {
+            var currentTime = DateTime.UtcNow;
+
+            // Only keep last SilenceSeconds + 1 seconds for average calculation
+            int average = GetInputVolumeAverage(_volumeAverageForSilence, currentTime, (_optionsService.Options.SilencePeriod + 1) * 1000);
+            _maxAverageVolumeLevel = Math.Max(average, _maxAverageVolumeLevel);
+            //Log.Logger.Information($"{(_optionsService.Options.SilencePeriod + 1) * 1000}ms average = {average}, _maxAverageVolumeLevel = {_maxAverageVolumeLevel}");
+
+            // Only check average if we have at least SilenceSeconds of volume data
+            bool hasbeenSilent = _volumeAverageForSilence.Count > 0 && _volumeAverageForSilence.Peek().Timestamp < currentTime.AddSeconds(_optionsService.Options.SilencePeriod * -1) && average < _minVolumeAverage;
+            if (hasbeenSilent)
+            {
+                if (HasAudioDetected())
+                {
+                    StopCommand($"[Audio detected] Automatically stopped recording having detected {_optionsService.Options.SilencePeriod} seconds of silence");
+                    return _optionsService.Options.AutoRestartAfterSilence ? eStopModes.CopyRestart : eStopModes.JustStop;
+                }
+                else if (_ElapsedTime.TotalSeconds >= _silenceSecToRestart && _optionsService.Options.AutoRestartAfterSilence)
+                {
+                    // It's been no sound?
+                    StopCommand($"[No audio detected] Automatically stopped recording having detected {_silenceSecToRestart} seconds of silence");
+                    return _optionsService.Options.AutoRestartAfterSilence ? eStopModes.DeleteRestart : eStopModes.JustStop;
+                }
+            }
+            return eStopModes.Nothing;
+        }
+
+        private eStopModes StopIfChunkDetected()
+        {
+            int average = GetInputVolumeAverage(_volumeAverageForChunk, DateTime.Now, _optionsService.Options.ChunkDetectionSpan);
+            //Log.Logger.Information($"{_optionsService.Options.ChunkDetectionSpan}ms ave = {average}");
+            if (average <= _chunkDetectionVolumeThreshold && _ElapsedTime.TotalSeconds >= _chunkMinimumSecond)
+            {
+                // 
+                StopCommand("chunk detected");
+                if (HasAudioDetected())
+                {
+                    return eStopModes.CopyRestart;
+                }
+                else
+                {
+                    return eStopModes.DeleteRestart;
+                }
+            }
+            return eStopModes.Nothing;
+        }
+
+        private int GetInputVolumeAverage(Queue<VolumeSample> averageQueue, DateTime currentTime, int lastMiliSec)
+        {
+            while (averageQueue.Count > 0 && averageQueue.Peek().Timestamp < currentTime.AddMilliseconds(lastMiliSec * -1))
+            {
+                _ = averageQueue.Dequeue();
+            }
+            averageQueue.Enqueue(new VolumeSample { VolumeLevel = VolumeLevelAsPercentage, Timestamp = currentTime });
+
+            int average = 0;
+            averageQueue.ForEach(v => average += v.VolumeLevel);
+            average /= averageQueue.Count;
+            return average;
+        }
+
+        private bool HasAudioDetected()
+        {
+            return _maxAverageVolumeLevel > _validInputLevel;
+        }
+
+        private void StopCommand(string logMsg)
+        {
+            RecordingStatus = RecordingStatus.StopRequested;  // Prevent threading from requesting multiple stops
+            Log.Logger.Information(logMsg);
             StopRecordingCommand.Execute(null);
         }
+
+        //private void AutoStopRecordingAfterSilence()
+        //{
+        //    Log.Logger.Information(
+        //        "Automatically stopped recording after {Limit} seconds of silence",
+        //        _optionsService.Options.MaxSilenceTimeSeconds);
+
+        //    StopRecordingCommand.Execute(null);
+        //}
 
         private void AutoStopRecordingAtLimit()
         {
@@ -334,7 +430,34 @@ namespace OnlyR.ViewModel
             Log.Logger.Information("Stopped recording");
             RecordingStatus = RecordingStatus.NotRecording;
             VolumeLevelAsPercentage = 0;
+            _maxAverageVolumeLevel= 0;
             _stopwatch.Stop();
+        }
+
+        private void StopCompleteHandler(object? sender, RecordingStatusChangeEventArgs e)
+        {
+            // AutoRestart
+            switch (_eStopMode)
+            {
+                case eStopModes.CopyRestart:
+                    restartRecording();
+                    break;
+                case eStopModes.DeleteRestart:
+                    if (File.Exists(e.FinalRecordingPath))
+                    {
+                        File.Delete(e.FinalRecordingPath);
+                        Log.Logger.Information($"Silence file '{Path.GetFileName(e.FinalRecordingPath)}' is deleted");
+                    }
+                    restartRecording();
+                    break;
+            }
+
+            void restartRecording()
+            {
+                _eStopMode = eStopModes.JustStop;
+                Log.Logger.Information("Restart recording after silence detected");
+                StartRecordingCommand.Execute(null);
+            }
         }
 
         private void AudioStartedHandler(object? sender, EventArgs e)
@@ -350,12 +473,10 @@ namespace OnlyR.ViewModel
                 ClearErrorMsg();
                 Log.Logger.Information("Start requested");
 
-                _silenceService.Reset();
-
                 var recordingDate = DateTime.Today;
                 var candidateFile = _destinationService.GetRecordingFileCandidate(
                     _optionsService, recordingDate, _commandLineService.OptionsIdentifier);
-                
+
                 CheckDiskSpace(candidateFile);
 
                 _audioService.StartRecording(candidateFile, _optionsService);
@@ -400,6 +521,8 @@ namespace OnlyR.ViewModel
             try
             {
                 ClearErrorMsg();
+                _volumeAverageForSilence.Clear();
+                _volumeAverageForChunk.Clear();
                 _audioService.StopRecording(_optionsService.Options?.FadeOut ?? false);
             }
             catch (Exception ex)

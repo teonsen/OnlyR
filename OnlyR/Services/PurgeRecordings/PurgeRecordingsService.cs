@@ -74,14 +74,14 @@ namespace OnlyR.Services.PurgeRecordings
                     case PurgeServiceJob.Nothing:
                         Log.Logger.Information($"Starting purge of old recordings (older than {days} days)");
                         _lastJob = PurgeServiceJob.FilePurge;
-                        itemsDeletedCount = await PurgeFilesInternal(days);
+                        //itemsDeletedCount = await PurgeFilesInternal(days);
                         _allFilesDone = itemsDeletedCount == 0;
                         break;
 
                     case PurgeServiceJob.FilePurge:
                         Log.Logger.Information("Starting removal of empty folders");
                         _lastJob = PurgeServiceJob.FolderPurge;
-                        itemsDeletedCount = await RemoveEmptyFolders();
+                        //itemsDeletedCount = await RemoveEmptyFolders();
                         break;
 
                     default:
@@ -120,14 +120,14 @@ namespace OnlyR.Services.PurgeRecordings
             }
         }
         
-        private Task<int> RemoveEmptyFolders()
-        {
-            var t = Task.Run(
-                () => DeleteFolders(GetEmptyFolders()),
-                _cancellationTokenSource.Token);
+        //private Task<int> RemoveEmptyFolders()
+        //{
+        //    var t = Task.Run(
+        //        () => DeleteFolders(GetEmptyFolders()),
+        //        _cancellationTokenSource.Token);
 
-            return t;
-        }
+        //    return t;
+        //}
 
         private int DeleteFolders(IReadOnlyCollection<string>? emptyFolders)
         {
@@ -157,19 +157,19 @@ namespace OnlyR.Services.PurgeRecordings
             return count;
         }
 
-        // returns number of files deleted
-        private Task<int> PurgeFilesInternal(int recordingsLifeTimeDays)
-        {
-            var t = Task.Run(
-                () =>
-                {
-                    var oldFileDate = DateTime.Now.AddDays(-recordingsLifeTimeDays);
-                    return DeleteCandidates(GetPurgeCandidates(oldFileDate));
-                }, 
-                _cancellationTokenSource.Token);
+        //// returns number of files deleted
+        //private Task<int> PurgeFilesInternal(int recordingsLifeTimeDays)
+        //{
+        //    var t = Task.Run(
+        //        () =>
+        //        {
+        //            var oldFileDate = DateTime.Now.AddDays(-recordingsLifeTimeDays);
+        //            return DeleteCandidates(GetPurgeCandidates(oldFileDate));
+        //        }, 
+        //        _cancellationTokenSource.Token);
 
-            return t;
-        }
+        //    return t;
+        //}
 
         private int DeleteCandidates(IEnumerable<string> candidatePaths)
         {
@@ -204,205 +204,205 @@ namespace OnlyR.Services.PurgeRecordings
             return count;
         }
 
-        private IReadOnlyCollection<string> GetEmptyFolders()
-        {
-            var result = new List<string>();
+        //private IReadOnlyCollection<string> GetEmptyFolders()
+        //{
+        //    var result = new List<string>();
 
-            if (_cancellationTokenSource.IsCancellationRequested)
+        //    if (_cancellationTokenSource.IsCancellationRequested)
                 
-            {
-                return result;
-            }
+        //    {
+        //        return result;
+        //    }
             
-            var rootFolder = FileUtils.GetRootDestinationFolder(
-                _commandLineService.OptionsIdentifier,
-                _optionsService.Options.DestinationFolder);
+        //    var rootFolder = FileUtils.GetRootDestinationFolder(
+        //        _commandLineService.OptionsIdentifier,
+        //        _optionsService.Options.DestinationFolder);
 
-            if (!Directory.Exists(rootFolder))
-            {
-                return result;
-            }
+        //    if (!Directory.Exists(rootFolder))
+        //    {
+        //        return result;
+        //    }
             
-            var yearSubFolders = Directory.GetDirectories(rootFolder);
-            foreach (var yearFolder in yearSubFolders)
-            {
-                if (_cancellationTokenSource.IsCancellationRequested)
-                {
-                    break;
-                }
+        //    var yearSubFolders = Directory.GetDirectories(rootFolder);
+        //    foreach (var yearFolder in yearSubFolders)
+        //    {
+        //        if (_cancellationTokenSource.IsCancellationRequested)
+        //        {
+        //            break;
+        //        }
 
-                var yearOfFolder = FileUtils.ParseYearFromFolderName(Path.GetFileName(yearFolder));
-                if (yearOfFolder == null)
-                {
-                    continue;
-                }
+        //        var yearOfFolder = FileUtils.ParseYearFromFolderName(Path.GetFileName(yearFolder));
+        //        if (yearOfFolder == null)
+        //        {
+        //            continue;
+        //        }
 
-                if (FileUtils.IsDirectoryEmpty(yearFolder) && yearOfFolder != DateTime.Now.Year)
-                {
-                    Log.Logger.Debug($"Found empty folder: {yearFolder}");
-                    result.Add(yearFolder);
-                }
+        //        if (FileUtils.IsDirectoryEmpty(yearFolder) && yearOfFolder != DateTime.Now.Year)
+        //        {
+        //            Log.Logger.Debug($"Found empty folder: {yearFolder}");
+        //            result.Add(yearFolder);
+        //        }
 
-                var monthSubFolders = Directory.GetDirectories(yearFolder);
-                foreach (var monthFolder in monthSubFolders)
-                {
-                    if (_cancellationTokenSource.IsCancellationRequested)
-                    {
-                        break;
-                    }
+        //        var monthSubFolders = Directory.GetDirectories(yearFolder);
+        //        foreach (var monthFolder in monthSubFolders)
+        //        {
+        //            if (_cancellationTokenSource.IsCancellationRequested)
+        //            {
+        //                break;
+        //            }
 
-                    var monthOfFolder = FileUtils.ParseMonthFromFolderName(Path.GetFileName(monthFolder));
-                    if (monthOfFolder == null)
-                    {
-                        continue;
-                    }
+        //            var monthOfFolder = FileUtils.ParseMonthFromFolderName(Path.GetFileName(monthFolder));
+        //            if (monthOfFolder == null)
+        //            {
+        //                continue;
+        //            }
 
-                    if (FileUtils.IsDirectoryEmpty(monthFolder) && 
-                        (yearOfFolder != DateTime.Now.Year || monthOfFolder != DateTime.Now.Month))
-                    {
-                        Log.Logger.Debug($"Found empty folder: {monthFolder}");
-                        result.Add(monthFolder);
-                    }
+        //            if (FileUtils.IsDirectoryEmpty(monthFolder) && 
+        //                (yearOfFolder != DateTime.Now.Year || monthOfFolder != DateTime.Now.Month))
+        //            {
+        //                Log.Logger.Debug($"Found empty folder: {monthFolder}");
+        //                result.Add(monthFolder);
+        //            }
 
-                    var dateSubFolders = Directory.GetDirectories(monthFolder);
-                    foreach (var dateFolder in dateSubFolders)
-                    {
-                        if (_cancellationTokenSource.IsCancellationRequested)
-                        {
-                            break;
-                        }
+        //            var dateSubFolders = Directory.GetDirectories(monthFolder);
+        //            foreach (var dateFolder in dateSubFolders)
+        //            {
+        //                if (_cancellationTokenSource.IsCancellationRequested)
+        //                {
+        //                    break;
+        //                }
 
-                        var dateOfFolder = FileUtils.ParseDateFromFolderName(
-                            Path.GetFileName(dateFolder),
-                            yearOfFolder.Value,
-                            monthOfFolder.Value);
+        //                var dateOfFolder = FileUtils.ParseDateFromFolderName(
+        //                    Path.GetFileName(dateFolder),
+        //                    yearOfFolder.Value,
+        //                    monthOfFolder.Value);
 
-                        if (dateOfFolder == null)
-                        {
-                            continue;
-                        }
+        //                if (dateOfFolder == null)
+        //                {
+        //                    continue;
+        //                }
 
-                        if (FileUtils.IsDirectoryEmpty(dateFolder) &&
-                            (yearOfFolder != DateTime.Now.Year || 
-                             monthOfFolder != DateTime.Now.Month || 
-                             dateOfFolder != DateTime.Today.Date))
-                        {
-                            Log.Logger.Debug($"Found empty folder: {dateFolder}");
-                            result.Add(dateFolder);
-                        }
-                    }
-                }
-            }
+        //                if (FileUtils.IsDirectoryEmpty(dateFolder) &&
+        //                    (yearOfFolder != DateTime.Now.Year || 
+        //                     monthOfFolder != DateTime.Now.Month || 
+        //                     dateOfFolder != DateTime.Today.Date))
+        //                {
+        //                    Log.Logger.Debug($"Found empty folder: {dateFolder}");
+        //                    result.Add(dateFolder);
+        //                }
+        //            }
+        //        }
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
-        private IEnumerable<string> GetPurgeCandidates(DateTime oldFileDate)
-        {
-            if (_cancellationTokenSource.IsCancellationRequested)
-            {
-                yield break;
-            }
+        //private IEnumerable<string> GetPurgeCandidates(DateTime oldFileDate)
+        //{
+        //    if (_cancellationTokenSource.IsCancellationRequested)
+        //    {
+        //        yield break;
+        //    }
 
-            var folders = GetPurgeCandidateFolders(oldFileDate);
+        //    var folders = GetPurgeCandidateFolders(oldFileDate);
 
-            foreach (var folder in folders)
-            {
-                var files = Directory.EnumerateFiles(folder, "*.mp3");
-                foreach (var file in files)
-                {
-                    Log.Logger.Debug($"Found file: {file}");
-                    yield return file;
-                }
-            }
-        }
+        //    foreach (var folder in folders)
+        //    {
+        //        var files = Directory.EnumerateFiles(folder, "*.mp3");
+        //        foreach (var file in files)
+        //        {
+        //            Log.Logger.Debug($"Found file: {file}");
+        //            yield return file;
+        //        }
+        //    }
+        //}
 
-        private IEnumerable<string> GetPurgeCandidateFolders(DateTime oldFileDate)
-        {
-            if (_cancellationTokenSource.IsCancellationRequested)
-            {
-                yield break;
-            }
+        //private IEnumerable<string> GetPurgeCandidateFolders(DateTime oldFileDate)
+        //{
+        //    if (_cancellationTokenSource.IsCancellationRequested)
+        //    {
+        //        yield break;
+        //    }
 
-            var rootFolder = FileUtils.GetRootDestinationFolder(
-                _commandLineService.OptionsIdentifier,
-                _optionsService.Options.DestinationFolder);
+        //    var rootFolder = FileUtils.GetRootDestinationFolder(
+        //        _commandLineService.OptionsIdentifier,
+        //        _optionsService.Options.DestinationFolder);
 
-            if (!Directory.Exists(rootFolder))
-            {
-                yield break;
-            }
+        //    if (!Directory.Exists(rootFolder))
+        //    {
+        //        yield break;
+        //    }
 
-            var yearSubFolders = Directory.EnumerateDirectories(rootFolder);
-            foreach (var yearFolder in yearSubFolders)
-            {
-                if (_cancellationTokenSource.IsCancellationRequested)
-                {
-                    break;
-                }
+        //    var yearSubFolders = Directory.EnumerateDirectories(rootFolder);
+        //    foreach (var yearFolder in yearSubFolders)
+        //    {
+        //        if (_cancellationTokenSource.IsCancellationRequested)
+        //        {
+        //            break;
+        //        }
 
-                var yearOfFolder = FileUtils.ParseYearFromFolderName(Path.GetFileName(yearFolder));
-                if (yearOfFolder == null)
-                {
-                    continue;
-                }
+        //        var yearOfFolder = FileUtils.ParseYearFromFolderName(Path.GetFileName(yearFolder));
+        //        if (yearOfFolder == null)
+        //        {
+        //            continue;
+        //        }
 
-                if (!YearFolderMayContainCandidates(yearOfFolder.Value, oldFileDate))
-                {
-                    continue;
-                }
+        //        if (!YearFolderMayContainCandidates(yearOfFolder.Value, oldFileDate))
+        //        {
+        //            continue;
+        //        }
 
-                if (_cancellationTokenSource.IsCancellationRequested)
-                {
-                    break;
-                }
+        //        if (_cancellationTokenSource.IsCancellationRequested)
+        //        {
+        //            break;
+        //        }
 
-                var monthSubFolders = Directory.EnumerateDirectories(yearFolder);
-                foreach (var monthFolder in monthSubFolders)
-                {
-                    if (_cancellationTokenSource.IsCancellationRequested)
-                    {
-                        break;
-                    }
+        //        var monthSubFolders = Directory.EnumerateDirectories(yearFolder);
+        //        foreach (var monthFolder in monthSubFolders)
+        //        {
+        //            if (_cancellationTokenSource.IsCancellationRequested)
+        //            {
+        //                break;
+        //            }
 
-                    var monthOfFolder = FileUtils.ParseMonthFromFolderName(Path.GetFileName(monthFolder));
-                    if (monthOfFolder == null)
-                    {
-                        continue;
-                    }
+        //            var monthOfFolder = FileUtils.ParseMonthFromFolderName(Path.GetFileName(monthFolder));
+        //            if (monthOfFolder == null)
+        //            {
+        //                continue;
+        //            }
 
-                    if (!MonthFolderMayContainCandidates(yearOfFolder.Value, monthOfFolder.Value, oldFileDate))
-                    {
-                        continue;
-                    }
+        //            if (!MonthFolderMayContainCandidates(yearOfFolder.Value, monthOfFolder.Value, oldFileDate))
+        //            {
+        //                continue;
+        //            }
 
-                    var dateSubFolders = Directory.EnumerateDirectories(monthFolder);
-                    foreach (var dateFolder in dateSubFolders)
-                    {
-                        if (_cancellationTokenSource.IsCancellationRequested)
-                        {
-                            break;
-                        }
+        //            var dateSubFolders = Directory.EnumerateDirectories(monthFolder);
+        //            foreach (var dateFolder in dateSubFolders)
+        //            {
+        //                if (_cancellationTokenSource.IsCancellationRequested)
+        //                {
+        //                    break;
+        //                }
 
-                        var dateOfFolder = FileUtils.ParseDateFromFolderName(
-                            Path.GetFileName(dateFolder), 
-                            yearOfFolder.Value, 
-                            monthOfFolder.Value);
+        //                var dateOfFolder = FileUtils.ParseDateFromFolderName(
+        //                    Path.GetFileName(dateFolder), 
+        //                    yearOfFolder.Value, 
+        //                    monthOfFolder.Value);
 
-                        if (dateOfFolder == null)
-                        {
-                            continue;
-                        }
+        //                if (dateOfFolder == null)
+        //                {
+        //                    continue;
+        //                }
 
-                        if (dateOfFolder.Value.Date < oldFileDate.Date)
-                        {
-                            Log.Logger.Debug($"Found folder: {dateFolder}");
-                            yield return dateFolder;
-                        }
-                    }
-                }
-            }
-        }
+        //                if (dateOfFolder.Value.Date < oldFileDate.Date)
+        //                {
+        //                    Log.Logger.Debug($"Found folder: {dateFolder}");
+        //                    yield return dateFolder;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         private static bool MonthFolderMayContainCandidates(int yearOfFolder, int monthOfFolder, DateTime oldFileDate)
         {

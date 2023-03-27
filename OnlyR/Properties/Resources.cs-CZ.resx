@@ -277,7 +277,7 @@
     <value>Vzorkovací frekvence</value>
     <comment>Settings page combobox title</comment>
   </data>
-  <data name="SETTINGS_SILENCE_AS_PERCENTAGE_VOLUME" xml:space="preserve">
+  <data name="SETTINGS_CHUNK_DETECTION_SPAN" xml:space="preserve">
     <value>Jak nízká úroveň se má považovat za ticho (v % z maxima)</value>
     <comment>Settings page combobox title</comment>
   </data>

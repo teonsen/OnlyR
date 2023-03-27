@@ -26,7 +26,8 @@ namespace OnlyR.Services.RecordingDestination
             DateTime dt,
             string? commandLineIdentifier)
         {
-            var destFolder = FileUtils.GetDestinationFolder(dt, commandLineIdentifier, optionsService.Options.DestinationFolder);
+            //var destFolder = FileUtils.GetDestinationFolder(dt, commandLineIdentifier, optionsService.Options.DestinationFolder);
+            var destFolder = FileUtils.GetDestinationFolder2(commandLineIdentifier, optionsService.Options.DestinationFolder);
             var finalPathAndTrack = GetNextAvailableFile(optionsService, destFolder, dt);
 
             if (finalPathAndTrack == null)

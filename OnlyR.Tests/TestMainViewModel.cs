@@ -98,7 +98,7 @@ namespace OnlyR.Tests
             var copyService = MockGenerator.CreateCopyRecordingsService();
             var snackbarService = MockGenerator.CreateSnackbarService();
             var purgeRecordingsService = MockGenerator.CreatePurgeRecordingsService();
-            var silenceService = MockGenerator.CreateSilenceService();
+            //var silenceService = MockGenerator.CreateSilenceService();
 
             return new MainViewModel(
                 audioService,
@@ -107,8 +107,7 @@ namespace OnlyR.Tests
                 destService.Object,
                 copyService.Object,
                 snackbarService.Object,
-                purgeRecordingsService.Object,
-                silenceService.Object);
+                purgeRecordingsService.Object);
         }
     }
 

@@ -1,7 +1,4 @@
-﻿using Microsoft.Toolkit.Mvvm.Messaging;
-using Microsoft.Toolkit.Mvvm.ComponentModel;
-using Microsoft.Toolkit.Mvvm.Input;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -13,6 +10,9 @@ using OnlyR.Model;
 using OnlyR.Services.Audio;
 using OnlyR.Services.Options;
 using OnlyR.Utils;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Input;
 
 namespace OnlyR.ViewModel
 {
@@ -32,6 +32,7 @@ namespace OnlyR.ViewModel
         private readonly RecordingLifeTimeItem[] _recordingLifetimes;
         private readonly ICommandLineService _commandLineService;
         private readonly LanguageItem[] _languages;
+        private readonly SilencePeriod[] _silencePeriods;
         private readonly MaxSilenceTimeItem[] _maxSilenceTimes;
 
         public SettingsPageViewModel(
@@ -51,9 +52,11 @@ namespace OnlyR.ViewModel
             _maxRecordingTimes = GenerateMaxRecordingTimeItems();
             _recordingLifetimes = GenerateRecordingLifeTimes();
             _languages = GetSupportedLanguages();
+            _silencePeriods = GetSilencePeriods();
             _maxSilenceTimes = GetMaxSilenceTimes();
 
-            NavigateRecordingCommand = new RelayCommand(NavigateRecording);
+            //NavigateRecordingCommand = new RelayCommand(NavigateRecording);
+            NavigateRecordingCommand = new RelayCommand(NavigateRecording, CanExecuteNavigateRecording);
             ShowRecordingsCommand = new RelayCommand(ShowRecordings);
             SelectDestinationFolderCommand = new RelayCommand(SelectDestinationFolder);
         }
@@ -71,31 +74,21 @@ namespace OnlyR.ViewModel
 
         public IEnumerable<RecordingLifeTimeItem> RecordingLifeTimes => _recordingLifetimes;
 
+        public IEnumerable<SilencePeriod> SilencePeriods => _silencePeriods;
+
         public IEnumerable<MaxSilenceTimeItem> MaxSilenceTimeItems => _maxSilenceTimes;
 
-        public int MaxSilenceTimeSeconds
-        {
-            get => _optionsService.Options.MaxSilenceTimeSeconds;
-            set
-            {
-                if (_optionsService.Options.MaxSilenceTimeSeconds != value)
-                {
-                    _optionsService.Options.MaxSilenceTimeSeconds = value;
-                }
-            }
-        }
-
-        public int SilenceAsVolumePercentage
-        {
-            get => _optionsService.Options.SilenceAsVolumePercentage;
-            set
-            {
-                if (_optionsService.Options.SilenceAsVolumePercentage != value)
-                {
-                    _optionsService.Options.SilenceAsVolumePercentage = value;
-                }
-            }
-        }
+        //public int MaxSilenceTimeSeconds
+        //{
+        //    get => _optionsService.Options.MaxSilenceTimeSeconds;
+        //    set
+        //    {
+        //        if (_optionsService.Options.MaxSilenceTimeSeconds != value)
+        //        {
+        //            _optionsService.Options.MaxSilenceTimeSeconds = value;
+        //        }
+        //    }
+        //}
 
         public int MaxRecordingTime
         {
@@ -181,6 +174,66 @@ namespace OnlyR.ViewModel
                 if (_optionsService.Options.StartMinimized != value)
                 {
                     _optionsService.Options.StartMinimized = value;
+                }
+            }
+        }
+
+        public bool StopOnSilence
+        {
+            get => _optionsService.Options.StopOnSilence;
+            set
+            {
+                if (_optionsService.Options.StopOnSilence != value)
+                {
+                    _optionsService.Options.StopOnSilence = value;
+                }
+            }
+        }
+
+        public int SilencePeriod
+        {
+            get => _optionsService.Options.SilencePeriod;
+            set
+            {
+                if (_optionsService.Options.SilencePeriod != value)
+                {
+                    _optionsService.Options.SilencePeriod = value;
+                }
+            }
+        }
+
+        public bool AutoRestartAfterSilence
+        {
+            get => _optionsService.Options.AutoRestartAfterSilence;
+            set
+            {
+                if (_optionsService.Options.AutoRestartAfterSilence != value)
+                {
+                    _optionsService.Options.AutoRestartAfterSilence = value;
+                }
+            }
+        }
+
+        public bool SplitRecordingByChunk
+        {
+            get => _optionsService.Options.SplitRecordingByChunk;
+            set
+            {
+                if (_optionsService.Options.SplitRecordingByChunk != value)
+                {
+                    _optionsService.Options.SplitRecordingByChunk = value;
+                }
+            }
+        }
+
+        public int ChunkDetectionSpan
+        {
+            get => _optionsService.Options.ChunkDetectionSpan;
+            set
+            {
+                if (_optionsService.Options.ChunkDetectionSpan != value)
+                {
+                    _optionsService.Options.ChunkDetectionSpan = value;
                 }
             }
         }
@@ -322,9 +375,9 @@ namespace OnlyR.ViewModel
             return new[]
             {
                 new MaxSilenceTimeItem(Properties.Resources.STOP_ON_SILENCE_DISABLED, 0),
-                new MaxSilenceTimeItem($"{Properties.Resources.X_SECS} - {10}", 10),
-                new MaxSilenceTimeItem($"{Properties.Resources.X_SECS} - {15}", 15),
-                new MaxSilenceTimeItem($"{Properties.Resources.X_SECS} - {30}", 30),
+                new MaxSilenceTimeItem($"{Properties.Resources.X_SECONDS} - {10}", 10),
+                new MaxSilenceTimeItem($"{Properties.Resources.X_SECONDS} - {15}", 15),
+                new MaxSilenceTimeItem($"{Properties.Resources.X_SECONDS} - {30}", 30),
                 new MaxSilenceTimeItem($"{Properties.Resources.X_MINS} - {1}", 30),
                 new MaxSilenceTimeItem($"{Properties.Resources.X_MINS} - {2}", 120),
                 new MaxSilenceTimeItem($"{Properties.Resources.X_MINS} - {3}", 180),
@@ -337,9 +390,9 @@ namespace OnlyR.ViewModel
             return new[]
             {
                 new MaxRecordingTimeItem(Properties.Resources.NO_LIMIT, 0),
-                new MaxRecordingTimeItem($"{Properties.Resources.X_SECS} - {15}", 15),
-                new MaxRecordingTimeItem($"{Properties.Resources.X_SECS} - {30}", 30),
-                new MaxRecordingTimeItem($"{Properties.Resources.X_SECS} - {45}", 45),
+                new MaxRecordingTimeItem($"{Properties.Resources.X_SECONDS} - {15}", 15),
+                new MaxRecordingTimeItem($"{Properties.Resources.X_SECONDS} - {30}", 30),
+                new MaxRecordingTimeItem($"{Properties.Resources.X_SECONDS} - {45}", 45),
                 new MaxRecordingTimeItem($"{Properties.Resources.ONE_MIN}", 60),
                 new MaxRecordingTimeItem($"{Properties.Resources.X_MINS} - {2}", 2 * 60),
                 new MaxRecordingTimeItem($"{Properties.Resources.X_MINS} - {5}", 5 * 60),
@@ -351,7 +404,29 @@ namespace OnlyR.ViewModel
                 new MaxRecordingTimeItem($"{Properties.Resources.ONE_HOUR} - {3}", 180 * 60)
             };
         }
-        
+
+        private static SilencePeriod[] GetSilencePeriods()
+        {
+            SilencePeriod[] result =
+            {
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_SECONDS, 1), Seconds = 1 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_SECONDS, 2), Seconds = 2 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_SECONDS, 3), Seconds = 3 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_SECONDS, 10), Seconds = 10 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_SECONDS, 30), Seconds = 30 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_MINS, 1), Seconds = 60 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_MINS, 5), Seconds = 300 },
+                new SilencePeriod { Name = string.Format(Properties.Resources.X_MINS, 10), Seconds = 600 },
+            };
+
+            return result;
+        }
+
+        private static bool CanExecuteNavigateRecording()
+        {
+            return true;
+        }
+
         private void NavigateRecording()
         {
             Save();

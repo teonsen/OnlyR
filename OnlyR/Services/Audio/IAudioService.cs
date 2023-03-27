@@ -11,6 +11,8 @@ namespace OnlyR.Services.Audio
 
         event EventHandler StoppedEvent;
 
+        event EventHandler<RecordingStatusChangeEventArgs> StopCompleteEvent;
+
         event EventHandler StopRequested;
 
         event EventHandler<RecordingProgressEventArgs> RecordingProgressEvent;
@@ -20,5 +22,6 @@ namespace OnlyR.Services.Audio
         void StartRecording(RecordingCandidate candidateFile, IOptionsService optionsService);
 
         void StopRecording(bool fadeOut);
+
     }
 }

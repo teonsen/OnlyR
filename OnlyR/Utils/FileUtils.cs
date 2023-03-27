@@ -12,11 +12,11 @@ namespace OnlyR.Utils
     /// </summary>
     public static class FileUtils
     {
-        private const string AppNamePathSegment = "OnlyR";
+        //private const string AppNamePathSegment = "OnlyR";
 
         private const string OptionsFileName = "options.json";
 
-        private const string FullDateFormat = "yyyy-MM-dd";
+        //private const string FullDateFormat = "yyyy-MM-dd";
 
         /// <summary>
         /// Creates directory if it doesn't exist. Throws if cannot be created
@@ -36,14 +36,14 @@ namespace OnlyR.Utils
             }
         }
 
-        /// <summary>
-        /// Gets system temp folder
-        /// </summary>
-        /// <returns>Temp folder</returns>
-        public static string GetSystemTempFolder()
-        {
-            return Path.GetTempPath();
-        }
+        ///// <summary>
+        ///// Gets system temp folder
+        ///// </summary>
+        ///// <returns>Temp folder</returns>
+        //public static string GetSystemTempFolder()
+        //{
+        //    return Path.GetTempPath();
+        //}
 
         /// <summary>
         /// Gets number of free bytes available on the drive on which folderName resides
@@ -76,20 +76,21 @@ namespace OnlyR.Utils
         /// <returns>Log folder</returns>
         public static string GetLogFolder()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                AppNamePathSegment,
-                "Logs");
+            //return Path.Combine(
+            //    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            //    AppNamePathSegment,
+            //    "Logs");
+            return Path.Combine(Environment.CurrentDirectory, "Logs");
         }
 
-        /// <summary>
-        /// Gets the application's MyDocs folder, e.g. "...MyDocuments\OnlyR"
-        /// </summary>
-        /// <returns>Folder path</returns>
-        public static string GetDefaultMyDocsDestinationFolder()
-        {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppNamePathSegment);
-        }
+        ///// <summary>
+        ///// Gets the application's MyDocs folder, e.g. "...MyDocuments\OnlyR"
+        ///// </summary>
+        ///// <returns>Folder path</returns>
+        //public static string GetDefaultMyDocsDestinationFolder()
+        //{
+        //    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppNamePathSegment);
+        //}
 
         /// <summary>
         /// Gets the recording destination folder
@@ -98,95 +99,107 @@ namespace OnlyR.Utils
         /// <param name="commandLineIdentifier">Optional command-line id</param>
         /// <param name="rootFromOptions">Overriding root folder as manually specified in app's settings</param>
         /// <returns>Folder path</returns>
-        public static string GetDestinationFolder(DateTime dt, string? commandLineIdentifier, string? rootFromOptions)
+        public static string GetDestinationFolder2(string? commandLineIdentifier, string? rootFromOptions)
         {
-            return Path.Combine(
-                GetMonthlyDestinationFolder(dt, commandLineIdentifier, rootFromOptions),
-                dt.ToString(FullDateFormat, CultureInfo.CurrentCulture));
+            return Path.Combine(GetRootDestinationFolder(commandLineIdentifier, rootFromOptions), "Recordings");
         }
 
-        /// <summary>
-        /// Gets the recording destination folder for the month
-        /// </summary>
-        /// <param name="dt">Date of recording</param>
-        /// <param name="commandLineIdentifier">Optional command-line id</param>
-        /// <param name="rootFromOptions">Overriding root folder as manually specified in app's settings</param>
-        /// <returns>Folder path</returns>
-        public static string GetMonthlyDestinationFolder(DateTime dt, string? commandLineIdentifier, string? rootFromOptions)
-        {
-            return Path.Combine(
-                GetRootDestinationFolder(commandLineIdentifier, rootFromOptions),
-                dt.ToString("yyyy", CultureInfo.CurrentCulture),
-                dt.ToString("MM", CultureInfo.CurrentCulture));
-        }
+        ///// <summary>
+        ///// Gets the recording destination folder
+        ///// </summary>
+        ///// <param name="dt">Date of recording</param>
+        ///// <param name="commandLineIdentifier">Optional command-line id</param>
+        ///// <param name="rootFromOptions">Overriding root folder as manually specified in app's settings</param>
+        ///// <returns>Folder path</returns>
+        //public static string GetDestinationFolder(DateTime dt, string? commandLineIdentifier, string? rootFromOptions)
+        //{
+        //    return Path.Combine(
+        //        GetMonthlyDestinationFolder(dt, commandLineIdentifier, rootFromOptions),
+        //        dt.ToString(FullDateFormat, CultureInfo.CurrentCulture));
+        //}
 
-        public static int? ParseYearFromFolderName(string yearlyDestinationFolderName)
-        {
-            if (yearlyDestinationFolderName.Length != 4)
-            {
-                return null;
-            }
+        ///// <summary>
+        ///// Gets the recording destination folder for the month
+        ///// </summary>
+        ///// <param name="dt">Date of recording</param>
+        ///// <param name="commandLineIdentifier">Optional command-line id</param>
+        ///// <param name="rootFromOptions">Overriding root folder as manually specified in app's settings</param>
+        ///// <returns>Folder path</returns>
+        //public static string GetMonthlyDestinationFolder(DateTime dt, string? commandLineIdentifier, string? rootFromOptions)
+        //{
+        //    return Path.Combine(
+        //        GetRootDestinationFolder(commandLineIdentifier, rootFromOptions),
+        //        dt.ToString("yyyy", CultureInfo.CurrentCulture),
+        //        dt.ToString("MM", CultureInfo.CurrentCulture));
+        //}
 
-            if (!int.TryParse(yearlyDestinationFolderName, out var result))
-            {
-                return null;
-            }
+        //public static int? ParseYearFromFolderName(string yearlyDestinationFolderName)
+        //{
+        //    if (yearlyDestinationFolderName.Length != 4)
+        //    {
+        //        return null;
+        //    }
 
-            if (result < 2000 || result > 3000)
-            {
-                return null;
-            }
+        //    if (!int.TryParse(yearlyDestinationFolderName, out var result))
+        //    {
+        //        return null;
+        //    }
 
-            return result;
-        }
+        //    if (result < 2000 || result > 3000)
+        //    {
+        //        return null;
+        //    }
 
-        public static int? ParseMonthFromFolderName(string monthlyDestinationFolderName)
-        {
-            if (monthlyDestinationFolderName.Length != 2)
-            {
-                return null;
-            }
+        //    return result;
+        //}
 
-            if (!int.TryParse(monthlyDestinationFolderName, out var result))
-            {
-                return null;
-            }
+        //public static int? ParseMonthFromFolderName(string monthlyDestinationFolderName)
+        //{
+        //    if (monthlyDestinationFolderName.Length != 2)
+        //    {
+        //        return null;
+        //    }
 
-            if (result < 1 || result > 12)
-            {
-                return null;
-            }
+        //    if (!int.TryParse(monthlyDestinationFolderName, out var result))
+        //    {
+        //        return null;
+        //    }
 
-            return result;
-        }
+        //    if (result < 1 || result > 12)
+        //    {
+        //        return null;
+        //    }
 
-        public static DateTime? ParseDateFromFolderName(
-            string fullDateDestinationFolderName, 
-            int expectedYear,
-            int expectedMonth)
-        {
-            if (fullDateDestinationFolderName.Length != FullDateFormat.Length)
-            {
-                return null;
-            }
+        //    return result;
+        //}
 
-            if (!DateTime.TryParseExact(
-                fullDateDestinationFolderName,
-                FullDateFormat,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out var result))
-            {
-                return null;
-            }
+        //public static DateTime? ParseDateFromFolderName(
+        //    string fullDateDestinationFolderName, 
+        //    int expectedYear,
+        //    int expectedMonth)
+        //{
+        //    if (fullDateDestinationFolderName.Length != FullDateFormat.Length)
+        //    {
+        //        return null;
+        //    }
 
-            if (result.Year != expectedYear || result.Month != expectedMonth)
-            {
-                return null;
-            }
+        //    if (!DateTime.TryParseExact(
+        //        fullDateDestinationFolderName,
+        //        FullDateFormat,
+        //        CultureInfo.InvariantCulture,
+        //        DateTimeStyles.None,
+        //        out var result))
+        //    {
+        //        return null;
+        //    }
 
-            return result.Date;
-        }
+        //    if (result.Year != expectedYear || result.Month != expectedMonth)
+        //    {
+        //        return null;
+        //    }
+
+        //    return result.Date;
+        //}
 
         /// <summary>
         /// Gets the recording destination folder
@@ -207,10 +220,27 @@ namespace OnlyR.Utils
         /// <returns>Folder path</returns>
         public static string GetTempRecordingFolder()
         {
-            var folder = Path.Combine(GetSystemTempFolder(), AppNamePathSegment, "Recordings");
+            //var folder = Path.Combine(GetSystemTempFolder(), AppNamePathSegment, "Recordings");
+            var folder = Path.Combine(Environment.CurrentDirectory, "Temp");
             CreateDirectory(folder);
             return folder;
         }
+
+        ///// <summary>
+        ///// Gets the file path for storing the user options
+        ///// </summary>
+        ///// <param name="commandLineIdentifier">Optional command-line id</param>
+        ///// <param name="optionsVersion">The options schema version</param>
+        ///// <returns>Options file path.</returns>
+        //public static string GetUserOptionsFilePath(string? commandLineIdentifier, int optionsVersion)
+        //{
+        //    return Path.Combine(
+        //        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        //        AppNamePathSegment,
+        //        commandLineIdentifier ?? string.Empty,
+        //        optionsVersion.ToString(CultureInfo.CurrentCulture),
+        //        OptionsFileName);
+        //}
 
         /// <summary>
         /// Gets the file path for storing the user options
@@ -221,8 +251,8 @@ namespace OnlyR.Utils
         public static string GetUserOptionsFilePath(string? commandLineIdentifier, int optionsVersion)
         {
             return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                AppNamePathSegment,
+                Environment.CurrentDirectory,
+                "Options",
                 commandLineIdentifier ?? string.Empty,
                 optionsVersion.ToString(CultureInfo.CurrentCulture),
                 OptionsFileName);
@@ -297,30 +327,33 @@ namespace OnlyR.Utils
 
             try
             {
-                var today = DateTime.Today;
+                //var today = DateTime.Today;
                 
                 // first try today's folder...
-                folder = GetDestinationFolder(today, commandLineIdentifier, destFolder);
+                //folder = GetDestinationFolder(today, commandLineIdentifier, destFolder);
+                folder = GetDestinationFolder2(commandLineIdentifier, destFolder);
 
                 if (!Directory.Exists(folder))
                 {
-                    // try this month's folder...
-                    folder = GetMonthlyDestinationFolder(today, commandLineIdentifier, destFolder);
+                    Directory.CreateDirectory(folder);
 
-                    if (!Directory.Exists(folder))
-                    {
-                        folder = GetRootDestinationFolder(commandLineIdentifier, destFolder);
+                    //// try this month's folder...
+                    //folder = GetMonthlyDestinationFolder(today, commandLineIdentifier, destFolder);
 
-                        if (!Directory.Exists(folder) && !string.IsNullOrEmpty(commandLineIdentifier))
-                        {
-                            folder = GetRootDestinationFolder(string.Empty, destFolder);
+                    //if (!Directory.Exists(folder))
+                    //{
+                    //    folder = GetRootDestinationFolder(commandLineIdentifier, destFolder);
 
-                            if (!Directory.Exists(folder))
-                            {
-                                Directory.CreateDirectory(folder);
-                            }
-                        }
-                    }
+                    //    if (!Directory.Exists(folder) && !string.IsNullOrEmpty(commandLineIdentifier))
+                    //    {
+                    //        folder = GetRootDestinationFolder(string.Empty, destFolder);
+
+                    //        if (!Directory.Exists(folder))
+                    //        {
+                    //            Directory.CreateDirectory(folder);
+                    //        }
+                    //    }
+                    //}
                 }
             }
             catch (Exception ex)
@@ -330,7 +363,7 @@ namespace OnlyR.Utils
 
             if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
             {
-                folder = GetDefaultMyDocsDestinationFolder();
+                folder = Environment.CurrentDirectory;
                 Directory.CreateDirectory(folder);
             }
 
@@ -339,21 +372,29 @@ namespace OnlyR.Utils
 
         public static void MoveFile(string sourcePath, string destPath)
         {
-            Log.Logger.Information("Copying {Source} to {Target}", sourcePath, destPath);
-
-            var path = Path.GetDirectoryName(destPath);
-            if (path != null)
+            if (File.Exists(sourcePath))
             {
-                Directory.CreateDirectory(path);
-                File.Move(sourcePath, destPath);
+                Log.Logger.Information($"Copying {sourcePath} to {destPath}");
+
+                var path = Path.GetDirectoryName(destPath);
+                if (path != null)
+                {
+                    Directory.CreateDirectory(path);
+                    File.Move(sourcePath, destPath);
+                }
+            }
+            else
+            {
+                Log.Logger.Information($"Copy ERROR! Source .mp3 does not exist. Path: {sourcePath}");
             }
         }
 
         private static string GetRecordingFolderRoot(string? rootFromOptions)
         {
-            return DirectoryIsAvailable(rootFromOptions) 
-                ? rootFromOptions!
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppNamePathSegment);
+            //return DirectoryIsAvailable(rootFromOptions) 
+            //    ? rootFromOptions!
+            //    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppNamePathSegment);
+            return Environment.CurrentDirectory;
         }
 
         private static bool DirectoryIsAvailable(string? dir)

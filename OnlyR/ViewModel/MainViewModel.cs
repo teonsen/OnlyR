@@ -1,4 +1,3 @@
-using Microsoft.Toolkit.Mvvm.Messaging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,11 +8,9 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
-using Microsoft.Toolkit.Mvvm.ComponentModel;
 using OnlyR.ViewModel.Messages;
 using OnlyR.Model;
 using OnlyR.AutoUpdates;
-using OnlyR.Services.AudioSilence;
 using OnlyR.Services.PurgeRecordings;
 using OnlyR.Pages;
 using OnlyR.Services.Audio;
@@ -22,6 +19,8 @@ using OnlyR.Services.RecordingCopies;
 using OnlyR.Services.RecordingDestination;
 using OnlyR.Services.Snackbar;
 using OnlyR.Utils;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace OnlyR.ViewModel
 {
@@ -45,8 +44,7 @@ namespace OnlyR.ViewModel
            IRecordingDestinationService destService,
            ICopyRecordingsService copyRecordingsService,
            ISnackbarService snackbarService,
-           IPurgeRecordingsService purgeRecordingsService,
-           ISilenceService silenceService)
+           IPurgeRecordingsService purgeRecordingsService)
         {
             if (commandLineService.NoGpu)
             {
@@ -75,8 +73,7 @@ namespace OnlyR.ViewModel
                     commandLineService, 
                     destService, 
                     copyRecordingsService,
-                    snackbarService,
-                    silenceService));
+                    snackbarService));
 
             SetupPage(
                 SettingsPageViewModel.PageName, 
@@ -196,7 +193,7 @@ namespace OnlyR.ViewModel
 
             Process.Start(psi);
         }
-
+        
         private void FixAnyUnfinishedRecording()
         {
             if (_unfinishedRecordingFileFoundOnStartup == null)

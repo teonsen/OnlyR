@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Toolkit.Mvvm.Messaging;
 using OnlyR.Services.Audio;
-using OnlyR.Services.AudioSilence;
 using OnlyR.Services.Options;
 using OnlyR.Services.PurgeRecordings;
 using OnlyR.Services.RecordingCopies;
@@ -13,9 +11,10 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.Toolkit.Mvvm.DependencyInjection;
 using OnlyR.Utils;
 using OnlyR.ViewModel.Messages;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace OnlyR
 {
@@ -65,7 +64,6 @@ namespace OnlyR
             serviceCollection.AddSingleton<IDriveEjectionService, DriveEjectionService>();
             serviceCollection.AddSingleton<ISnackbarService, SnackbarService>();
             serviceCollection.AddSingleton<IPurgeRecordingsService, PurgeRecordingsService>();
-            serviceCollection.AddSingleton<ISilenceService, SilenceService>();
             serviceCollection.AddSingleton<MainViewModel>();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();

@@ -8,8 +8,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:resx="clr-namespace:OnlyR.Properties"
     xmlns:volumeMeter="clr-namespace:OnlyR.VolumeMeter"
-    d:DesignHeight="330"
-    d:DesignWidth="300"
+    d:DesignHeight="260"
+    d:DesignWidth="220"
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource MaterialDesignFont}"
     TextElement.FontSize="13"
@@ -101,8 +101,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="86*" />
-            <ColumnDefinition Width="235*" />
+            <ColumnDefinition Width="1.2*" />
+            <ColumnDefinition Width="5*" />
         </Grid.ColumnDefinitions>
 
         <volumeMeter:VduControl

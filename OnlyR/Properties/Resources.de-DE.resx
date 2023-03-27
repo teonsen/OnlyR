@@ -277,7 +277,7 @@
     <value>Abtastrate</value>
     <comment>Settings page combobox title</comment>
   </data>
-  <data name="SETTINGS_SILENCE_AS_PERCENTAGE_VOLUME" xml:space="preserve">
+  <data name="SETTINGS_CHUNK_DETECTION_SPAN" xml:space="preserve">
     <value>Stille-Erkennung (% der vollen Lautstärke)</value>
     <comment>Settings page combobox title</comment>
   </data>

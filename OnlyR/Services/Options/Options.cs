@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
@@ -18,7 +19,7 @@ namespace OnlyR.Services.Options
         private const int DefaultSampleRate = 44100;
         private const int DefaultChannelCount = 1;
         private const int DefaultMp3BitRate = 96;
-        private const int DefaultSilenceAsVolumePercentage = 5;
+        private const int DefaultChunkDetectionSpan = 500;
 
         private static readonly int[] ValidSampleRates = { 8000, 11025, 16000, 22050, 32000, 44100, 48000 };
         private static readonly int[] ValidChannelCounts = { 1, 2 };
@@ -33,9 +34,11 @@ namespace OnlyR.Services.Options
             Genre = Properties.Resources.SPEECH;
             MaxRecordingTimeSeconds = DefaultMaxRecordingSeconds;
             RecordingDevice = DefaultRecordingDevice;
-            DestinationFolder = FileUtils.GetDefaultMyDocsDestinationFolder();
+            //DestinationFolder = FileUtils.GetDefaultMyDocsDestinationFolder();
+            DestinationFolder = Environment.CurrentDirectory;
             RecordingsLifeTimeDays = 0; // forever
-            SilenceAsVolumePercentage = DefaultSilenceAsVolumePercentage;
+            SilencePeriod = 30;
+            ChunkDetectionSpan = DefaultChunkDetectionSpan;
         }
 
         public int MaxRecordingsInOneFolder { get; set; }
@@ -49,10 +52,6 @@ namespace OnlyR.Services.Options
         public string? Genre { get; set; }
 
         public int MaxRecordingTimeSeconds { get; set; }
-
-        public int MaxSilenceTimeSeconds { get; set; }
-
-        public int SilenceAsVolumePercentage { get; set; }
 
         public int RecordingDevice { get; set; }
 
@@ -77,6 +76,16 @@ namespace OnlyR.Services.Options
         public string? Culture { get; set; }
 
         public bool StartMinimized { get; set; }
+
+        public bool StopOnSilence { get; set; }
+
+        public int SilencePeriod { get; set; }
+
+        public bool AutoRestartAfterSilence { get; set; }
+
+        public bool SplitRecordingByChunk { get; set; }
+
+        public int ChunkDetectionSpan { get; set; }
 
         public string? UnfinishedRecordingTempPath { get; set; }
 
@@ -144,16 +153,6 @@ namespace OnlyR.Services.Options
             if (RecordingDevice < 0)
             {
                 RecordingDevice = DefaultRecordingDevice;
-            }
-
-            if (SilenceAsVolumePercentage < 1 || SilenceAsVolumePercentage > 90)
-            {
-                SilenceAsVolumePercentage = DefaultSilenceAsVolumePercentage;
-            }
-
-            if (MaxSilenceTimeSeconds < 0)
-            {
-                MaxSilenceTimeSeconds = 0;
             }
         }
     }

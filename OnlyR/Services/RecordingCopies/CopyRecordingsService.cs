@@ -174,10 +174,11 @@ namespace OnlyR.Services.RecordingCopies
             var today = DateTime.Today;
 
             // first try today's folder...
-            var folder = FileUtils.GetDestinationFolder(
-                today, 
-                _commandLineService.OptionsIdentifier,
-                _optionsService.Options.DestinationFolder);
+            //var folder = FileUtils.GetDestinationFolder(
+            //    today, 
+            //    _commandLineService.OptionsIdentifier,
+            //    _optionsService.Options.DestinationFolder);
+            var folder = FileUtils.GetDestinationFolder2(_commandLineService.OptionsIdentifier, _optionsService.Options.DestinationFolder);
 
             if (!Directory.Exists(folder))
             {

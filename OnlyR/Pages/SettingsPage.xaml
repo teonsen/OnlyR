@@ -162,13 +162,6 @@
                     SelectedValuePath="Seconds"
                     Style="{StaticResource SettingsComboStyle}" />
 
-                <Label Content="{x:Static resx:Resources.SETTINGS_SILENCE_AS_PERCENTAGE_VOLUME}" />
-                <Slider
-                    AutomationProperties.AutomationId="SilenceDetectionVolume"
-                    AutomationProperties.Name="{x:Static resx:Resources.SETTINGS_SILENCE_AS_PERCENTAGE_VOLUME}"
-                    Style="{StaticResource SliderStyle}"
-                    Value="{Binding SilenceAsVolumePercentage}" />
-
                 <CheckBox
                     AutomationProperties.AutomationId="FadeOut"
                     AutomationProperties.Name="{x:Static resx:Resources.SETTINGS_FADE_OUT}"
@@ -203,6 +196,47 @@
                     Content="{x:Static resx:Resources.SETTINGS_START_MINIMIZED}"
                     IsChecked="{Binding StartMinimized, Mode=TwoWay}"
                     Style="{StaticResource SettingsCheckBox}" />
+
+                <CheckBox 
+                    x:Name="StopOnSilenceCheckBox"
+                    Style="{StaticResource SettingsCheckBox}"
+                    IsChecked="{Binding StopOnSilence, Mode=TwoWay}"
+                    Content="{x:Static resx:Resources.SETTINGS_STOP_SILENCE}"/>
+
+                <ComboBox 
+                    Style="{StaticResource SettingsComboStyle}"
+                    ItemsSource="{Binding SilencePeriods}" 
+                    IsEnabled="{Binding ElementName=StopOnSilenceCheckBox, Path=IsChecked}"
+                    
+                    materialDesign:HintAssist.Hint="{x:Static resx:Resources.SETTINGS_SILENCE_PERIOD}"
+                    DisplayMemberPath="Name" 
+                    SelectedValuePath="Seconds" 
+                    SelectedValue="{Binding SilencePeriod, Mode=TwoWay}"/>
+
+                <CheckBox 
+                    x:Name="AutoRestartAfterSilenceCheckBox"
+                    Style="{StaticResource SettingsCheckBox}"
+                    IsChecked="{Binding AutoRestartAfterSilence, Mode=TwoWay}"
+                    IsEnabled="{Binding ElementName=StopOnSilenceCheckBox, Path=IsChecked}"
+                    Content="{x:Static resx:Resources.SETTINGS_AUTORESTART_AFTER_SILENCE}"/>
+
+                <CheckBox 
+                    x:Name="ChunkDetectionCheckBox"
+                    Style="{StaticResource SettingsCheckBox}"
+                    IsChecked="{Binding SplitRecordingByChunk, Mode=TwoWay}"
+                    IsEnabled="{Binding ElementName=StopOnSilenceCheckBox, Path=IsChecked}"
+                    Content="{x:Static resx:Resources.SETTINGS_SPLIT_RECORDING_BY_CHUNK}"/>
+
+                <Label Content="{x:Static resx:Resources.SETTINGS_CHUNK_DETECTION_SPAN}" />
+                <Slider
+                    AutomationProperties.AutomationId="SilenceDetectionVolume"
+                    AutomationProperties.Name="{x:Static resx:Resources.SETTINGS_CHUNK_DETECTION_SPAN}"
+                    IsEnabled="{Binding ElementName=ChunkDetectionCheckBox, Path=IsChecked}"
+                    IsSnapToTickEnabled="True" Maximum="700" Minimum="300"
+                    Ticks="300, 400, 500, 600, 700"
+                    TickPlacement="BottomRight" AutoToolTipPlacement="BottomRight"
+                    Style="{StaticResource SliderStyle}"
+                    Value="{Binding ChunkDetectionSpan}" />
 
                 <TextBox
                     Margin="0,10,0,10"

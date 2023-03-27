@@ -1,5 +1,6 @@
 #nullable enable
-using Microsoft.Toolkit.Mvvm.DependencyInjection;
+
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace OnlyR.ViewModel
 {

@@ -9,7 +9,6 @@ using OnlyR.Core.Recorder;
 using OnlyR.Model;
 using OnlyR.Services.Options;
 using OnlyR.Utils;
-using Serilog;
 
 namespace OnlyR.Services.Audio
 {
@@ -34,6 +33,8 @@ namespace OnlyR.Services.Audio
         public event EventHandler? StartedEvent;
 
         public event EventHandler? StoppedEvent;
+
+        public event EventHandler<RecordingStatusChangeEventArgs>? StopCompleteEvent;
 
         public event EventHandler? StopRequested;
 
@@ -87,6 +88,11 @@ namespace OnlyR.Services.Audio
             _audioRecorder.Start(recordingConfig);
         }
 
+        public string GetCandidateTempPath()
+        {
+            return _currentRecording != null ? _currentRecording.TempPath : "";
+        }
+
         public void StopRecording(bool fadeOut)
         {
             _audioRecorder.Stop(fadeOut);
@@ -107,17 +113,17 @@ namespace OnlyR.Services.Audio
             OnRecordingProgressEvent(e);
         }
 
-        private void AudioRecorderOnRecordingStatusChangeHandler(object? sender, RecordingStatusChangeEventArgs recordingStatusChangeEventArgs)
+        private void AudioRecorderOnRecordingStatusChangeHandler(object? sender, RecordingStatusChangeEventArgs e)
         {
-            switch (recordingStatusChangeEventArgs.RecordingStatus)
+            switch (e.RecordingStatus)
             {
                 case RecordingStatus.NotRecording:
                     ClearPathOfUnfinishedRecording();
-                    OnStoppedEvent();
+                    OnStoppedEvent(e);
                     break;
 
                 case RecordingStatus.Recording:
-                    StorePathOfUnfinishedRecording(recordingStatusChangeEventArgs);
+                    StorePathOfUnfinishedRecording(e);
                     OnStartedEvent();
                     break;
 
@@ -151,11 +157,12 @@ namespace OnlyR.Services.Audio
             StartedEvent?.Invoke(this, EventArgs.Empty);
         }
 
-        private void OnStoppedEvent()
+        private void OnStoppedEvent(RecordingStatusChangeEventArgs e)
         {
-            StoppedEvent?.Invoke(this, EventArgs.Empty);
+            StoppedEvent?.Invoke(this, EventArgs.Empty); // --> AudioStoppedHandler
             CopyFileToFinalDestination();
             _currentRecording = null;
+            StopCompleteEvent?.Invoke(this, e);
         }
 
         private void CopyFileToFinalDestination()
@@ -178,4 +185,5 @@ namespace OnlyR.Services.Audio
             RecordingProgressEvent?.Invoke(this, e);
         }
     }
+
 }

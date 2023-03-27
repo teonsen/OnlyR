@@ -2,7 +2,6 @@
 using Moq;
 using OnlyR.Model;
 using OnlyR.Services.Audio;
-using OnlyR.Services.AudioSilence;
 using OnlyR.Services.Options;
 using OnlyR.Services.PurgeRecordings;
 using OnlyR.Services.RecordingCopies;
@@ -54,11 +53,6 @@ namespace OnlyR.Tests.Mocks
         public static Mock<IPurgeRecordingsService> CreatePurgeRecordingsService()
         {
             return new Mock<IPurgeRecordingsService>();
-        }
-
-        public static Mock<ISilenceService> CreateSilenceService()
-        {
-            return new Mock<ISilenceService>();
         }
     }
 }
